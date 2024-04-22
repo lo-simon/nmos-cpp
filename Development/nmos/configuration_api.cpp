@@ -121,19 +121,19 @@ namespace nmos
             }
         }
 
-        web::json::value get_nc_object(const resources& resources, const nmos::resource& resource, std::list<utility::string_t>& role_path_segments)
+        web::json::value get_non_root_nc_object(const resources& resources, const nmos::resource& parent_nc_block_resource, std::list<utility::string_t>& role_path_segments)
         {
-            if (resource.data.has_field(nmos::fields::nc::members))
+            if (parent_nc_block_resource.data.has_field(nmos::fields::nc::members))
             {
-                const auto& members = nmos::fields::nc::members(resource.data);
+                const auto& members = nmos::fields::nc::members(parent_nc_block_resource.data);
 
                 const auto role_path_segement = role_path_segments.front();
                 role_path_segments.pop_front();
                 // find the role_path_segment member
                 auto member_found = std::find_if(members.begin(), members.end(), [&](const web::json::value& member)
-                    {
-                        return role_path_segement == nmos::fields::nc::role(member);
-                    });
+                {
+                    return role_path_segement == nmos::fields::nc::role(member);
+                });
 
                 if (members.end() != member_found)
                 {
@@ -147,17 +147,17 @@ namespace nmos
                     if (is_nc_block(nmos::details::parse_nc_class_id(nmos::fields::nc::class_id(*member_found))))
                     {
                         // get resource based on the oid
-                        const auto& oid = nmos::fields::nc::oid(*member_found);
+                         const auto& oid = nmos::fields::nc::oid(*member_found);
                         const auto& found = find_resource(resources, utility::s2us(std::to_string(oid)));
                         if (resources.end() != found)
                         {
                             // verify the reminding role_path_segments
-                            return get_nc_object(resources, *found, role_path_segments);
+                            return get_non_root_nc_object(resources, *found, role_path_segments);
                         }
                     }
                 }
             }
-            return web::json::value().null();
+            return web::json::value{};
         }
     }
 
@@ -222,7 +222,7 @@ namespace nmos
                 {
                     role_path_segments.pop_front();
 
-                    result = role_path_segments.size() ? !details::get_nc_object(resources, *resource, role_path_segments).is_null() : true;
+                    result = role_path_segments.size() ? !details::get_non_root_nc_object(resources, *resource, role_path_segments).is_null() : true;
                 }
             }
 
@@ -259,7 +259,7 @@ namespace nmos
                 {
                     role_path_segments.pop_front();
 
-                    auto nc_object = details::get_nc_object(resources, *resource, role_path_segments);
+                    auto nc_object = role_path_segments.size() ? details::get_non_root_nc_object(resources, *resource, role_path_segments) : resource->data;
 
                     result = !nc_object.is_null();
 
@@ -272,13 +272,20 @@ namespace nmos
                             const auto& control_class = get_control_protocol_class_descriptor(class_id);
                             auto& property_descriptors = control_class.property_descriptors.as_array();
 
-                            for (auto property_descriptor : property_descriptors)
+                            auto properties_route = boost::copy_range<std::set<utility::string_t>>(property_descriptors | boost::adaptors::transformed([](const web::json::value& property_descriptor)
                             {
-                                auto property_id = nmos::fields::nc::id(property_descriptor);
-                                std::wostringstream property_id_str;
-                                property_id_str << nmos::fields::nc::level(property_id) << 'p' << nmos::fields::nc::index(property_id) << '/';
-                                properties_routes.insert(property_id_str.str());
-                            }
+                                auto make_property_id = [](const web::json::value& property_descriptor)
+                                {
+                                    auto property_id = nmos::fields::nc::id(property_descriptor);
+                                    utility::ostringstream_t os;
+                                    os << nmos::fields::nc::level(property_id) << 'p' << nmos::fields::nc::index(property_id);
+                                    return os.str();
+                                };
+
+                                return make_property_id(property_descriptor) + U("/");
+                            }));
+
+                            properties_routes.insert(properties_route.begin(), properties_route.end());
 
                             class_id.pop_back();
                         }
