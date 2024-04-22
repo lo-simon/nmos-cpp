@@ -121,7 +121,7 @@ namespace nmos
             }
         }
 
-        web::json::value get_non_root_nc_object(const resources& resources, const nmos::resource& parent_nc_block_resource, std::list<utility::string_t>& role_path_segments)
+        web::json::value get_child_nc_object(const resources& resources, const nmos::resource& parent_nc_block_resource, std::list<utility::string_t>& role_path_segments)
         {
             if (parent_nc_block_resource.data.has_field(nmos::fields::nc::members))
             {
@@ -152,7 +152,7 @@ namespace nmos
                         if (resources.end() != found)
                         {
                             // verify the reminding role_path_segments
-                            return get_non_root_nc_object(resources, *found, role_path_segments);
+                            return get_child_nc_object(resources, *found, role_path_segments);
                         }
                     }
                 }
@@ -222,7 +222,7 @@ namespace nmos
                 {
                     role_path_segments.pop_front();
 
-                    result = role_path_segments.size() ? !details::get_non_root_nc_object(resources, *resource, role_path_segments).is_null() : true;
+                    result = role_path_segments.size() ? !details::get_child_nc_object(resources, *resource, role_path_segments).is_null() : true;
                 }
             }
 
@@ -259,7 +259,7 @@ namespace nmos
                 {
                     role_path_segments.pop_front();
 
-                    auto nc_object = role_path_segments.size() ? details::get_non_root_nc_object(resources, *resource, role_path_segments) : resource->data;
+                    auto nc_object = role_path_segments.size() ? details::get_child_nc_object(resources, *resource, role_path_segments) : resource->data;
 
                     result = !nc_object.is_null();
 
