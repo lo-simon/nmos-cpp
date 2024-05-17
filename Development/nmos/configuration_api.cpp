@@ -634,6 +634,62 @@ namespace nmos
             });
         });
 
+        configuration_api.support(U("/rolePaths/") + nmos::patterns::rolePath.pattern + U("/bulkProperties/?"), methods::GET, [&model, get_control_protocol_class_descriptor, &gate_](http_request req, http_response res, const string_t&, const route_parameters& parameters)
+        {
+            const auto role_path = parameters.at(nmos::patterns::rolePath.name);
+
+            auto lock = model.read_lock();
+            auto& resources = model.control_protocol_resources;
+
+            const auto& resource = details::find_resource(resources, role_path);
+            if (resources.end() != resource)
+            {
+               /* nc_class_id class_id = nmos::details::parse_nc_class_id(nmos::fields::nc::class_id(resource->data));
+
+                if (!class_id.empty())
+                {
+                    const auto& control_class = get_control_protocol_class_descriptor(class_id);
+
+                    auto& description = control_class.description;
+                    auto& name = control_class.name;
+                    auto& fixed_role = control_class.fixed_role;
+                    auto property_descriptors = control_class.property_descriptors;
+                    auto method_descriptors = value::array();
+                    for (const auto& method_descriptor : control_class.method_descriptors) { web::json::push_back(method_descriptors, std::get<0>(method_descriptor)); }
+                    auto event_descriptors = control_class.event_descriptors;
+
+                    auto inherited_class_id = class_id;
+                    inherited_class_id.pop_back();
+
+                    while (!inherited_class_id.empty())
+                    {
+                        const auto& inherited_control_class = get_control_protocol_class_descriptor(inherited_class_id);
+                        {
+                            for (const auto& property_descriptor : inherited_control_class.property_descriptors.as_array()) { web::json::push_back(property_descriptors, property_descriptor); }
+                            for (const auto& method_descriptor : inherited_control_class.method_descriptors) { web::json::push_back(method_descriptors, std::get<0>(method_descriptor)); }
+                            for (const auto& event_descriptor : inherited_control_class.event_descriptors.as_array()) { web::json::push_back(event_descriptors, event_descriptor); }
+                        }
+                        inherited_class_id.pop_back();
+                    }
+
+                    auto class_descriptor = fixed_role.is_null()
+                        ? details::make_nc_class_descriptor(description, class_id, name, property_descriptors, method_descriptors, event_descriptors)
+                        : details::make_nc_class_descriptor(description, class_id, name, fixed_role.as_string(), property_descriptors, method_descriptors, event_descriptors);
+
+                    auto method_result = details::make_nc_method_result({ nmos::nc_method_status::ok }, class_descriptor);
+                    set_reply(res, status_codes::OK, method_result);
+                }*/
+                set_reply(res, status_codes::OK, details::make_nc_method_result({ nmos::nc_method_status::ok }));
+            }
+            else
+            {
+                // resource not found for the role path
+                set_error_reply(res, status_codes::NotFound, U("Not Found; ") + role_path);
+            }
+
+            return pplx::task_from_result(true);
+        });
+
         return configuration_api;
     }
 }
