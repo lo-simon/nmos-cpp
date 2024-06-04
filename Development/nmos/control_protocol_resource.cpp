@@ -1270,7 +1270,7 @@ namespace nmos
             web::json::push_back(parameters, details::make_nc_parameter_descriptor(U("If set the descriptor would contain all inherited elements"), nmos::fields::nc::path, U("NcRolePath"), false, false, value::null()));
             web::json::push_back(parameters, details::make_nc_parameter_descriptor(U("If true will validate properties on target path and all the nested paths"), nmos::fields::nc::recurse, U("NcBoolean"), false, false, value::null()));
             web::json::push_back(parameters, details::make_nc_parameter_descriptor(U("If true will allow the device to restore partially only the role paths which pass validation"), nmos::fields::nc::allow_partial, U("NcBoolean"), false, false, value::null()));
-            web::json::push_back(methods, details::make_nc_method_descriptor(U("Set bulk properties for setting by given paths"), nc_bulk_properties_manager_validate_set_properties_by_path_method_id, U("SetPropertiesByPath"), U("NcMethodResultObjectPropertiesSetValidation"), parameters, false));
+            web::json::push_back(methods, details::make_nc_method_descriptor(U("Set bulk properties for setting by given paths"), nc_bulk_properties_manager_set_properties_by_path_method_id, U("SetPropertiesByPath"), U("NcMethodResultObjectPropertiesSetValidation"), parameters, false));
         }
 
         return methods;
@@ -1362,7 +1362,7 @@ namespace nmos
     {
         using web::json::value;
 
-        return details::make_nc_class_descriptor(U("NcBulkPropertiesManager class descriptor"), nc_bulk_properties_manager_class_id, U("NcBulkPropertiesManager"), make_nc_bulk_properties_manager_properties(), make_nc_bulk_properties_manager_methods(), make_nc_bulk_properties_manager_events());
+        return details::make_nc_class_descriptor(U("NcBulkPropertiesManager class descriptor"), nc_bulk_properties_manager_class_id, U("NcBulkPropertiesManager"), U("BulkPropertiesManager"), make_nc_bulk_properties_manager_properties(), make_nc_bulk_properties_manager_methods(), make_nc_bulk_properties_manager_events());
     }
 
     // Primitive datatypes
