@@ -316,7 +316,7 @@ namespace nmos
                     // NcReceiverMonitorProtected events
                     to_vector(make_nc_receiver_monitor_protected_events())) },
                 // NcBulkPropertiesManager
-                { nc_bulk_properties_manager_class_id, make_control_class_descriptor(U("NcBulkPropertiesManager class descriptor"), nc_bulk_properties_manager_class_id, U("NcBulkPropertiesManager"),
+                { nc_bulk_properties_manager_class_id, make_control_class_descriptor(U("NcBulkPropertiesManager class descriptor"), nc_bulk_properties_manager_class_id, U("NcBulkPropertiesManager"), U("BulkPropertiesManager"),
                     to_vector(make_nc_bulk_properties_manager_properties()),
                     to_methods_vector(make_nc_bulk_properties_manager_methods(),
                     {
