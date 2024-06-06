@@ -1206,6 +1206,9 @@ void node_implementation_init(nmos::node_model& model, nmos::experimental::contr
         // example class manager
         auto class_manager = nmos::make_class_manager(++oid, control_protocol_state);
 
+        // example bulk properties manager
+        auto bulk_properties_manager = nmos::make_bulk_properties_manager(++oid);
+
         // example stereo gain
         const auto stereo_gain_oid = ++oid;
         auto stereo_gain = nmos::make_block(stereo_gain_oid, nmos::root_block_oid, U("stereo-gain"), U("Stereo gain"), U("Stereo gain block"));
