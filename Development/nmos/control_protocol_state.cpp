@@ -178,9 +178,30 @@ namespace nmos
                     return get_datatype(resources, resource, arguments, is_deprecated, get_control_protocol_datatype_descriptor, gate);
                 };
             }
+            nmos::experimental::control_protocol_method_handler make_nc_get_properties_by_path(experimental::control_protocol_method_handler control_protocol_method_handler)
+            {
+                return [control_protocol_method_handler](nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, slog::base_gate& gate)
+                {
+                    return get_properties_by_path(resources, resource, arguments, is_deprecated, control_protocol_method_handler, gate);
+                };
+            }
+            nmos::experimental::control_protocol_method_handler make_nc_validate_set_properties_by_path(experimental::control_protocol_method_handler control_protocol_method_handler)
+            {
+                return [control_protocol_method_handler](nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, slog::base_gate& gate)
+                    {
+                        return validate_set_properties_by_path(resources, resource, arguments, is_deprecated, control_protocol_method_handler, gate);
+                    };
+            }
+            nmos::experimental::control_protocol_method_handler make_nc_set_properties_by_path(experimental::control_protocol_method_handler control_protocol_method_handler)
+            {
+                return [control_protocol_method_handler](nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, slog::base_gate& gate)
+                    {
+                        return set_properties_by_path(resources, resource, arguments, is_deprecated, control_protocol_method_handler, gate);
+                    };
+            }
         }
 
-        control_protocol_state::control_protocol_state(control_protocol_property_changed_handler property_changed)
+        control_protocol_state::control_protocol_state(control_protocol_property_changed_handler property_changed, control_protocol_method_handler get_properties_by_path_method_handler, control_protocol_method_handler validate_set_properties_by_path_method_handler, control_protocol_method_handler set_properties_by_path_method_handler)
         {
             using web::json::value;
 
@@ -320,9 +341,9 @@ namespace nmos
                     to_vector(make_nc_bulk_properties_manager_properties()),
                     to_methods_vector(make_nc_bulk_properties_manager_methods(),
                     {
-                        { nc_bulk_properties_manager_get_properties_by_path_method_id, get_properties_by_path },
-                        { nc_bulk_properties_manager_validate_set_properties_by_path_method_id, validate_set_properties_by_path },
-                        { nc_bulk_properties_manager_set_properties_by_path_method_id, set_properties_by_path}
+                        { nc_bulk_properties_manager_get_properties_by_path_method_id, details::make_nc_get_properties_by_path(get_properties_by_path_method_handler) },
+                        { nc_bulk_properties_manager_validate_set_properties_by_path_method_id, details::make_nc_validate_set_properties_by_path(validate_set_properties_by_path_method_handler) },
+                        { nc_bulk_properties_manager_set_properties_by_path_method_id, details::make_nc_set_properties_by_path(set_properties_by_path_method_handler) }
                     }),
                     to_vector(make_nc_receiver_monitor_protected_events())) }
             };
