@@ -1723,7 +1723,7 @@ nmos::experimental::control_protocol_method_handler make_node_implementation_get
     return [&](nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, slog::base_gate& gate)
     {
         // Implement backup of device model here
-        return nmos::details::make_nc_method_result_error({ nmos::nc_method_status::method_not_implemented }, U("not implemented"));
+        return nmos::details::make_nc_method_result({ nmos::nc_method_status::ok });
     };
 }
 
@@ -1733,7 +1733,7 @@ nmos::experimental::control_protocol_method_handler make_node_implementation_val
     return [&](nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, slog::base_gate& gate)
         {
             // Can this backup be restored?
-            return nmos::details::make_nc_method_result_error({ nmos::nc_method_status::method_not_implemented }, U("not implemented"));
+            return nmos::details::make_nc_method_result({ nmos::nc_method_status::ok });
         };
 }
 
@@ -1743,7 +1743,7 @@ nmos::experimental::control_protocol_method_handler make_node_implementation_set
     return [&](nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, slog::base_gate& gate)
         {
             // Implement restore of device model here
-            return nmos::details::make_nc_method_result_error({ nmos::nc_method_status::method_not_implemented }, U("not implemented"));
+            return nmos::details::make_nc_method_result({ nmos::nc_method_status::ok });
         };
 }
 
