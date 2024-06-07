@@ -1717,6 +1717,36 @@ nmos::control_protocol_property_changed_handler make_node_implementation_control
     };
 }
 
+// Example Device Configuration callback for creating a back-up dataset
+nmos::experimental::control_protocol_method_handler make_node_implementation_get_properties_by_path_handler()
+{
+    return [&](nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, slog::base_gate& gate)
+    {
+        // Implement backup of device model here
+        return nmos::details::make_nc_method_result_error({ nmos::nc_method_status::method_not_implemented }, U("not implemented"));
+    };
+}
+
+// Example Device Configuration callback for validating a back-up dataset
+nmos::experimental::control_protocol_method_handler make_node_implementation_validate_set_properties_by_path_handler()
+{
+    return [&](nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, slog::base_gate& gate)
+        {
+            // Can this backup be restored?
+            return nmos::details::make_nc_method_result_error({ nmos::nc_method_status::method_not_implemented }, U("not implemented"));
+        };
+}
+
+// Example Device Configuration callback for restoring a back-up dataset
+nmos::experimental::control_protocol_method_handler make_node_implementation_set_properties_by_path_handler()
+{
+    return [&](nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, slog::base_gate& gate)
+        {
+            // Implement restore of device model here
+            return nmos::details::make_nc_method_result_error({ nmos::nc_method_status::method_not_implemented }, U("not implemented"));
+        };
+}
+
 namespace impl
 {
     nmos::interlace_mode get_interlace_mode(const nmos::settings& settings)
@@ -1871,5 +1901,8 @@ nmos::experimental::node_implementation make_node_implementation(nmos::node_mode
         .on_connection_activated(make_node_implementation_connection_activation_handler(model, gate))
         .on_validate_channelmapping_output_map(make_node_implementation_map_validator()) // may be omitted if not required
         .on_channelmapping_activated(make_node_implementation_channelmapping_activation_handler(gate))
-        .on_control_protocol_property_changed(make_node_implementation_control_protocol_property_changed_handler(gate)); // may be omitted if IS-12 not required
+        .on_control_protocol_property_changed(make_node_implementation_control_protocol_property_changed_handler(gate)) // may be omitted if IS-12 not required
+        .on_get_properties_by_path(make_node_implementation_get_properties_by_path_handler())
+        .on_validate_set_properties_by_path(make_node_implementation_validate_set_properties_by_path_handler())
+        .on_set_properties_by_path(make_node_implementation_set_properties_by_path_handler());
 }
