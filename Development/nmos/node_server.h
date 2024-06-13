@@ -82,9 +82,9 @@ namespace nmos
             node_implementation& on_get_control_datatype_descriptor(nmos::get_control_protocol_datatype_descriptor_handler get_control_protocol_datatype_descriptor) { this->get_control_protocol_datatype_descriptor = std::move(get_control_protocol_datatype_descriptor); return *this; }
             node_implementation& on_get_control_protocol_method_descriptor(nmos::get_control_protocol_method_descriptor_handler get_control_protocol_method_descriptor) { this->get_control_protocol_method_descriptor = std::move(get_control_protocol_method_descriptor); return *this; }
             node_implementation& on_control_protocol_property_changed(nmos::control_protocol_property_changed_handler control_protocol_property_changed) { this->control_protocol_property_changed = std::move(control_protocol_property_changed); return *this; }
-            node_implementation& on_get_properties_by_path(nmos::experimental::control_protocol_method_handler get_properties_by_path_method_handler) { this->get_properties_by_path_method_handler = std::move(get_properties_by_path_method_handler); return *this; }
-            node_implementation& on_validate_set_properties_by_path(nmos::experimental::control_protocol_method_handler validate_set_properties_by_path_method_handler) { this->validate_set_properties_by_path_method_handler = std::move(validate_set_properties_by_path_method_handler); return *this; }
-            node_implementation& on_set_properties_by_path(nmos::experimental::control_protocol_method_handler set_properties_by_path_method_handler) { this->set_properties_by_path_method_handler = std::move(set_properties_by_path_method_handler); return *this; }
+            node_implementation& on_get_properties_by_path(nmos::get_properties_by_path_handler get_properties_by_path_handler) { this->get_properties_by_path_handler = std::move(get_properties_by_path_handler); return *this; }
+            node_implementation& on_validate_set_properties_by_path(nmos::validate_set_properties_by_path_handler validate_set_properties_by_path_handler) { this->validate_set_properties_by_path_handler = std::move(validate_set_properties_by_path_handler); return *this; }
+            node_implementation& on_set_properties_by_path(nmos::set_properties_by_path_handler set_properties_by_path_handler) { this->set_properties_by_path_handler = std::move(set_properties_by_path_handler); return *this; }
 
             // deprecated, use on_validate_connection_resource_patch
             node_implementation& on_validate_merged(nmos::details::connection_resource_patch_validator validate_merged) { return on_validate_connection_resource_patch(std::move(validate_merged)); }
@@ -129,9 +129,9 @@ namespace nmos
             nmos::control_protocol_property_changed_handler control_protocol_property_changed;
 
             // Device Configuration method handlers
-            nmos::experimental::control_protocol_method_handler get_properties_by_path_method_handler;
-            nmos::experimental::control_protocol_method_handler validate_set_properties_by_path_method_handler;
-            nmos::experimental::control_protocol_method_handler set_properties_by_path_method_handler;
+            nmos::get_properties_by_path_handler get_properties_by_path_handler;
+            nmos::validate_set_properties_by_path_handler validate_set_properties_by_path_handler;
+            nmos::set_properties_by_path_handler set_properties_by_path_handler;
         };
 
         // Construct a server instance for an NMOS Node, implementing the IS-04 Node API, IS-05 Connection API, IS-07 Events API

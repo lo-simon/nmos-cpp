@@ -18,9 +18,9 @@
 
 namespace nmos
 {
-    inline web::http::experimental::listener::api_router make_unmounted_configuration_api(node_model& model, get_control_protocol_class_descriptor_handler get_control_protocol_class_descriptor, get_control_protocol_datatype_descriptor_handler get_control_protocol_datatype_descriptor, get_control_protocol_method_descriptor_handler get_control_protocol_method_descriptor, experimental::control_protocol_method_handler get_properties_by_path_method_handler, experimental::control_protocol_method_handler validate_set_properties_by_path_method_handler, experimental::control_protocol_method_handler set_properties_by_path_method_handler, control_protocol_property_changed_handler property_changed, slog::base_gate& gate);
+    inline web::http::experimental::listener::api_router make_unmounted_configuration_api(node_model& model, get_control_protocol_class_descriptor_handler get_control_protocol_class_descriptor, get_control_protocol_datatype_descriptor_handler get_control_protocol_datatype_descriptor, get_control_protocol_method_descriptor_handler get_control_protocol_method_descriptor, get_properties_by_path_handler get_properties_by_path_handler, validate_set_properties_by_path_handler validate_set_properties_by_path_handler, set_properties_by_path_handler set_properties_by_path_handler, control_protocol_property_changed_handler property_changed, slog::base_gate& gate);
 
-    web::http::experimental::listener::api_router make_configuration_api(node_model& model, web::http::experimental::listener::route_handler validate_authorization, get_control_protocol_class_descriptor_handler get_control_protocol_class_descriptor, get_control_protocol_datatype_descriptor_handler get_control_protocol_datatype_descriptor, get_control_protocol_method_descriptor_handler get_control_protocol_method_descriptor, experimental::control_protocol_method_handler get_properties_by_path_method_handler, experimental::control_protocol_method_handler validate_set_properties_by_path_method_handler, experimental::control_protocol_method_handler set_properties_by_path_method_handler, control_protocol_property_changed_handler property_changed, slog::base_gate& gate)
+    web::http::experimental::listener::api_router make_configuration_api(node_model& model, web::http::experimental::listener::route_handler validate_authorization, get_control_protocol_class_descriptor_handler get_control_protocol_class_descriptor, get_control_protocol_datatype_descriptor_handler get_control_protocol_datatype_descriptor, get_control_protocol_method_descriptor_handler get_control_protocol_method_descriptor, get_properties_by_path_handler get_properties_by_path_handler, validate_set_properties_by_path_handler validate_set_properties_by_path_handler, set_properties_by_path_handler set_properties_by_path_handler, control_protocol_property_changed_handler property_changed, slog::base_gate& gate)
     {
         using namespace web::http::experimental::listener::api_router_using_declarations;
 
@@ -51,7 +51,7 @@ namespace nmos
             return pplx::task_from_result(true);
         });
 
-        configuration_api.mount(U("/x-nmos/") + nmos::patterns::configuration_api.pattern + U("/") + nmos::patterns::version.pattern, make_unmounted_configuration_api(model, get_control_protocol_class_descriptor, get_control_protocol_datatype_descriptor, get_control_protocol_method_descriptor, get_properties_by_path_method_handler, validate_set_properties_by_path_method_handler, set_properties_by_path_method_handler, property_changed, gate));
+        configuration_api.mount(U("/x-nmos/") + nmos::patterns::configuration_api.pattern + U("/") + nmos::patterns::version.pattern, make_unmounted_configuration_api(model, get_control_protocol_class_descriptor, get_control_protocol_datatype_descriptor, get_control_protocol_method_descriptor, get_properties_by_path_handler, validate_set_properties_by_path_handler, set_properties_by_path_handler, property_changed, gate));
 
         return configuration_api;
     }
@@ -226,7 +226,7 @@ namespace nmos
         }
     }
 
-    inline web::http::experimental::listener::api_router make_unmounted_configuration_api(node_model& model, get_control_protocol_class_descriptor_handler get_control_protocol_class_descriptor, get_control_protocol_datatype_descriptor_handler get_control_protocol_datatype_descriptor, get_control_protocol_method_descriptor_handler get_control_protocol_method_descriptor, experimental::control_protocol_method_handler get_properties_by_path_method_handler, experimental::control_protocol_method_handler validate_set_properties_by_path_method_handler, experimental::control_protocol_method_handler set_properties_by_path_method_handler, control_protocol_property_changed_handler property_changed, slog::base_gate& gate_)
+    inline web::http::experimental::listener::api_router make_unmounted_configuration_api(node_model& model, get_control_protocol_class_descriptor_handler get_control_protocol_class_descriptor, get_control_protocol_datatype_descriptor_handler get_control_protocol_datatype_descriptor, get_control_protocol_method_descriptor_handler get_control_protocol_method_descriptor, get_properties_by_path_handler get_properties_by_path_handler, validate_set_properties_by_path_handler validate_set_properties_by_path_handler, set_properties_by_path_handler set_properties_by_path_handler, control_protocol_property_changed_handler property_changed, slog::base_gate& gate_)
     {
         using namespace web::http::experimental::listener::api_router_using_declarations;
 
@@ -646,7 +646,7 @@ namespace nmos
             });
         });
 
-        configuration_api.support(U("/rolePaths/") + nmos::patterns::rolePath.pattern + U("/bulkProperties/?"), methods::GET, [&model, get_properties_by_path_method_handler, &gate_](http_request req, http_response res, const string_t&, const route_parameters& parameters)
+        configuration_api.support(U("/rolePaths/") + nmos::patterns::rolePath.pattern + U("/bulkProperties/?"), methods::GET, [&model, get_properties_by_path_handler, &gate_](http_request req, http_response res, const string_t&, const route_parameters& parameters)
         {
             const auto role_path = parameters.at(nmos::patterns::rolePath.name);
 
@@ -656,15 +656,9 @@ namespace nmos
             const auto& resource = details::find_resource(resources, role_path);
             if (resources.end() != resource)
             {
-                using web::json::value_of;
-
                 bool recurse = details::parse_recurse_query_parameter(req.request_uri().query());
 
-                web::json::value arguments = value_of({
-                        { nmos::fields::nc::recurse, recurse }
-                    });
-
-                auto result = get_properties_by_path(resources, *resource, arguments, false, get_properties_by_path_method_handler, gate_);
+                auto result = get_properties_by_path_handler(*resource, recurse, false, gate_);
 
                 auto status = nmos::fields::nc::status(result);
                 auto code = (nc_method_status::ok == status || nc_method_status::property_deprecated == status) ? status_codes::OK : status_codes::InternalError;
@@ -679,7 +673,7 @@ namespace nmos
             return pplx::task_from_result(true);
         });
 
-        configuration_api.support(U("/rolePaths/") + nmos::patterns::rolePath.pattern + U("/bulkProperties/?"), methods::OPTIONS, [&model, validate_set_properties_by_path_method_handler, &gate_](http_request req, http_response res, const string_t&, const route_parameters& parameters)
+        configuration_api.support(U("/rolePaths/") + nmos::patterns::rolePath.pattern + U("/bulkProperties/?"), methods::PATCH, [&model, validate_set_properties_by_path_handler, &gate_](http_request req, http_response res, const string_t&, const route_parameters& parameters)
         {
             const auto role_path = parameters.at(nmos::patterns::rolePath.name);
 
@@ -689,13 +683,22 @@ namespace nmos
             const auto& resource = details::find_resource(resources, role_path);
             if (resources.end() != resource)
             {
-                return details::extract_json(req, gate_).then([res, resources, resource, validate_set_properties_by_path_method_handler, &gate_](value body) mutable
+                return details::extract_json(req, gate_).then([res, resources, resource, validate_set_properties_by_path_handler, &gate_](value body) mutable
                 {
-                    auto result = validate_set_properties_by_path(resources, *resource, body, false, validate_set_properties_by_path_method_handler, gate_);
+                    bool recurse = nmos::fields::nc::recurse(body);
+                    const auto& data_set = nmos::fields::nc::data_set(body);
+                    if (!data_set.is_null())
+                    {
+                        auto result = validate_set_properties_by_path_handler(*resource, data_set, recurse, false, gate_);
 
-                    auto status = nmos::fields::nc::status(result);
-                    auto code = (nc_method_status::ok == status || nc_method_status::property_deprecated == status) ? status_codes::OK : status_codes::InternalError;
-                    set_reply(res, code, result);
+                        auto status = nmos::fields::nc::status(result);
+                        auto code = (nc_method_status::ok == status || nc_method_status::property_deprecated == status) ? status_codes::OK : status_codes::InternalError;
+                        set_reply(res, code, result);
+                    }
+                    else
+                    {
+                        set_reply(res, status_codes::BadRequest, nmos::details::make_nc_method_result_error({ nc_method_status::parameter_error }, U("Null dataSet parameter")));
+                    }
                     return true;
                 });
             }
@@ -708,7 +711,7 @@ namespace nmos
             return pplx::task_from_result(true);
         });
 
-        configuration_api.support(U("/rolePaths/") + nmos::patterns::rolePath.pattern + U("/bulkProperties/?"), methods::PUT, [&model, set_properties_by_path_method_handler, &gate_](http_request req, http_response res, const string_t&, const route_parameters& parameters)
+        configuration_api.support(U("/rolePaths/") + nmos::patterns::rolePath.pattern + U("/bulkProperties/?"), methods::PUT, [&model, set_properties_by_path_handler, &gate_](http_request req, http_response res, const string_t&, const route_parameters& parameters)
         {
             const auto role_path = parameters.at(nmos::patterns::rolePath.name);
 
@@ -718,13 +721,23 @@ namespace nmos
             const auto& resource = details::find_resource(resources, role_path);
             if (resources.end() != resource)
             {
-                return details::extract_json(req, gate_).then([res, resources, resource, set_properties_by_path_method_handler, &gate_](value body) mutable
+                return details::extract_json(req, gate_).then([res, resources, resource, set_properties_by_path_handler, &gate_](value body) mutable
                 {
-                    auto result = set_properties_by_path(resources, *resource, body, false, set_properties_by_path_method_handler, gate_);
+                    bool recurse = nmos::fields::nc::recurse(body);
+                    bool allow_incomplete = nmos::fields::nc::allow_incomplete(body);
+                    const auto& data_set = nmos::fields::nc::data_set(body);
+                    if (!data_set.is_null())
+                    {
+                        auto result = set_properties_by_path_handler(*resource, data_set, recurse, allow_incomplete, false, gate_);
 
-                    auto status = nmos::fields::nc::status(result);
-                    auto code = (nc_method_status::ok == status || nc_method_status::property_deprecated == status) ? status_codes::OK : status_codes::InternalError;
-                    set_reply(res, code, result);
+                        auto status = nmos::fields::nc::status(result);
+                        auto code = (nc_method_status::ok == status || nc_method_status::property_deprecated == status) ? status_codes::OK : status_codes::InternalError;
+                        set_reply(res, code, result);
+                    }
+                    else
+                    {
+                        set_reply(res, status_codes::BadRequest, nmos::details::make_nc_method_result_error({ nc_method_status::parameter_error }, U("Null dataSet parameter")));
+                    }
                     return true;
                 });
             }

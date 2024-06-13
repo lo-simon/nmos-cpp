@@ -625,24 +625,4 @@ namespace nmos
 
         return details::make_nc_method_result_error({ nc_method_status::parameter_error }, U("name not found"));
     }
-
-    // NcBulkPropertiesManager method implementation
-    // Get bulk object properties by given path
-    web::json::value get_properties_by_path(nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, experimental::control_protocol_method_handler control_protocol_method_handler, slog::base_gate& gate)
-    {
-        // Delegate to user defined handler
-        return control_protocol_method_handler ? control_protocol_method_handler(resources, resource, arguments, is_deprecated, gate) : nmos::details::make_nc_method_result_error({ nmos::nc_method_status::method_not_implemented }, U("not implemented"));
-    }
-    // Validate bulk properties for setting by given paths
-    web::json::value validate_set_properties_by_path(nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, experimental::control_protocol_method_handler control_protocol_method_handler, slog::base_gate& gate)
-    {
-        // Delegate to user defined handler
-        return control_protocol_method_handler ? control_protocol_method_handler(resources, resource, arguments, is_deprecated, gate) : nmos::details::make_nc_method_result_error({ nmos::nc_method_status::method_not_implemented }, U("not implemented"));
-    }
-    // Set bulk properties by given paths
-    web::json::value set_properties_by_path(nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, experimental::control_protocol_method_handler control_protocol_method_handler, slog::base_gate& gate)
-    {
-        // Delegate to user defined handler
-        return control_protocol_method_handler ? control_protocol_method_handler(resources, resource, arguments, is_deprecated, gate) : nmos::details::make_nc_method_result_error({ nmos::nc_method_status::method_not_implemented }, U("not implemented"));
-    }
 }
