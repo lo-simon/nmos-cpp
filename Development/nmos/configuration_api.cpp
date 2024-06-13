@@ -205,10 +205,11 @@ namespace nmos
             static const web::json::experimental::json_validator validator
             {
                 nmos::experimental::load_json_schema,
-                boost::copy_range<std::vector<web::uri>>(boost::range::join(
-                    is14_versions::all | boost::adaptors::transformed(experimental::make_configrationapi_method_patch_request_schema_uri),
-                    is14_versions::all | boost::adaptors::transformed(experimental::make_configrationapi_property_value_put_request_schema_uri)
-                ))
+                boost::copy_range<std::vector<web::uri>>(boost::range::join(boost::range::join(boost::range::join(
+                    is14_versions::all | boost::adaptors::transformed(experimental::make_configurationapi_method_patch_request_schema_uri),
+                    is14_versions::all | boost::adaptors::transformed(experimental::make_configurationapi_property_value_put_request_schema_uri)),
+                    is14_versions::all | boost::adaptors::transformed(experimental::make_configurationapi_bulkProperties_validate_request_schema_uri)),
+                    is14_versions::all | boost::adaptors::transformed(experimental::make_configurationapi_bulkProperties_set_request_schema_uri)))
             };
             return validator;
         }
@@ -531,7 +532,7 @@ namespace nmos
                 const nmos::api_version version = nmos::parse_api_version(parameters.at(nmos::patterns::version.name));
 
                 // Validate JSON syntax according to the schema
-                details::configurationapi_validator().validate(body, experimental::make_configrationapi_method_patch_request_schema_uri(version));
+                details::configurationapi_validator().validate(body, experimental::make_configurationapi_method_patch_request_schema_uri(version));
 
                 const auto role_path = parameters.at(nmos::patterns::rolePath.name);
                 const auto method_id = parameters.at(nmos::patterns::methodId.name);
@@ -606,7 +607,7 @@ namespace nmos
                 const nmos::api_version version = nmos::parse_api_version(parameters.at(nmos::patterns::version.name));
 
                 // Validate JSON syntax according to the schema
-                details::configurationapi_validator().validate(body, experimental::make_configrationapi_property_value_put_request_schema_uri(version));
+                details::configurationapi_validator().validate(body, experimental::make_configurationapi_property_value_put_request_schema_uri(version));
 
                 const auto role_path = parameters.at(nmos::patterns::rolePath.name);
                 const auto property_id = parameters.at(nmos::patterns::propertyId.name);
@@ -651,6 +652,7 @@ namespace nmos
             const auto role_path = parameters.at(nmos::patterns::rolePath.name);
 
             auto lock = model.read_lock();
+
             auto& resources = model.control_protocol_resources;
 
             const auto& resource = details::find_resource(resources, role_path);
@@ -678,13 +680,17 @@ namespace nmos
             const auto role_path = parameters.at(nmos::patterns::rolePath.name);
 
             auto lock = model.read_lock();
+            const nmos::api_version version = nmos::parse_api_version(parameters.at(nmos::patterns::version.name));
             auto& resources = model.control_protocol_resources;
 
             const auto& resource = details::find_resource(resources, role_path);
             if (resources.end() != resource)
             {
-                return details::extract_json(req, gate_).then([res, resources, resource, validate_set_properties_by_path_handler, &gate_](value body) mutable
+                return details::extract_json(req, gate_).then([res, resources, resource, validate_set_properties_by_path_handler, version, &gate_](value body) mutable
                 {
+                    // Validate JSON syntax according to the schema
+                    details::configurationapi_validator().validate(body, experimental::make_configurationapi_bulkProperties_validate_request_schema_uri(version));
+
                     bool recurse = nmos::fields::nc::recurse(body);
                     const auto& data_set = nmos::fields::nc::data_set(body);
                     if (!data_set.is_null())
@@ -716,28 +722,27 @@ namespace nmos
             const auto role_path = parameters.at(nmos::patterns::rolePath.name);
 
             auto lock = model.read_lock();
+            const nmos::api_version version = nmos::parse_api_version(parameters.at(nmos::patterns::version.name));
             auto& resources = model.control_protocol_resources;
 
             const auto& resource = details::find_resource(resources, role_path);
             if (resources.end() != resource)
             {
-                return details::extract_json(req, gate_).then([res, resources, resource, set_properties_by_path_handler, &gate_](value body) mutable
+                return details::extract_json(req, gate_).then([res, resources, resource, set_properties_by_path_handler, version, &gate_](value body) mutable
                 {
-                    bool recurse = nmos::fields::nc::recurse(body);
-                    bool allow_incomplete = nmos::fields::nc::allow_incomplete(body);
-                    const auto& data_set = nmos::fields::nc::data_set(body);
-                    if (!data_set.is_null())
-                    {
-                        auto result = set_properties_by_path_handler(*resource, data_set, recurse, allow_incomplete, false, gate_);
+                    // Validate JSON syntax according to the schema
+                    details::configurationapi_validator().validate(body, experimental::make_configurationapi_bulkProperties_set_request_schema_uri(version));
 
-                        auto status = nmos::fields::nc::status(result);
-                        auto code = (nc_method_status::ok == status || nc_method_status::property_deprecated == status) ? status_codes::OK : status_codes::InternalError;
-                        set_reply(res, code, result);
-                    }
-                    else
-                    {
-                        set_reply(res, status_codes::BadRequest, nmos::details::make_nc_method_result_error({ nc_method_status::parameter_error }, U("Null dataSet parameter")));
-                    }
+                    const auto& arguments = nmos::fields::nc::arguments(body);
+                    bool recurse = nmos::fields::nc::recurse(arguments);
+                    bool allow_incomplete = nmos::fields::nc::allow_incomplete(arguments);
+                    const auto& data_set = nmos::fields::nc::data_set(arguments);
+                    auto result = set_properties_by_path_handler(*resource, data_set, recurse, allow_incomplete, false, gate_);
+
+                    auto status = nmos::fields::nc::status(result);
+                    auto code = (nc_method_status::ok == status || nc_method_status::property_deprecated == status) ? status_codes::OK : status_codes::InternalError;
+                    set_reply(res, code, result);
+
                     return true;
                 });
             }
