@@ -38,9 +38,9 @@ namespace nmos
 
     // Device Configuration handlers
     // these callbacks should not throw exceptions
-    typedef std::function<web::json::value(const nmos::resource& resource, bool recurse, bool is_deprecated, slog::base_gate& gate)> get_properties_by_path_handler;
-    typedef std::function<web::json::value(const nmos::resource& resource, const web::json::value& backup_data_set, bool recurse, bool is_deprecated, slog::base_gate& gate)> validate_set_properties_by_path_handler;
-    typedef std::function<web::json::value(const nmos::resource& resource, const web::json::value& backup_data_set, bool recurse, bool allow_incomplete, bool is_deprecated, slog::base_gate& gate)> set_properties_by_path_handler;
+    typedef std::function<web::json::value(const nmos::resource& resource, bool recurse)> get_properties_by_path_handler;
+    typedef std::function<web::json::value(const nmos::resource& resource, const web::json::value& backup_data_set, bool recurse)> validate_set_properties_by_path_handler;
+    typedef std::function<web::json::value(const nmos::resource& resource, const web::json::value& backup_data_set, bool recurse, bool allow_incomplete)> set_properties_by_path_handler;
 
     namespace experimental
     {

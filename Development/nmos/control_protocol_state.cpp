@@ -178,21 +178,31 @@ namespace nmos
                     return get_datatype(resources, resource, arguments, is_deprecated, get_control_protocol_datatype_descriptor, gate);
                 };
             }
-            nmos::experimental::control_protocol_method_handler make_nc_get_properties_by_path_handler(get_properties_by_path_handler get_properties_by_path_handler)
+            nmos::experimental::control_protocol_method_handler make_nc_get_properties_by_path_handler(get_properties_by_path_handler get_properties_by_path)
             {
-                return [get_properties_by_path_handler](nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, slog::base_gate& gate)
+                return [get_properties_by_path](nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, slog::base_gate& gate)
                 {
-                    using web::json::value;
-
                     bool recurse = nmos::fields::nc::recurse(arguments);
 
                     // Delegate to user defined handler
-                    return get_properties_by_path_handler ? get_properties_by_path_handler(resource, recurse, is_deprecated, gate) : nmos::details::make_nc_method_result_error({ nmos::nc_method_status::method_not_implemented }, U("not implemented"));
+
+                    auto result = nmos::details::make_nc_method_result_error({ nmos::nc_method_status::method_not_implemented }, U("not implemented"));
+                    if (get_properties_by_path)
+                    {
+                        result = get_properties_by_path(resource, recurse);
+
+                        const auto& status = nmos::fields::nc::status(result);
+                        if (!web::http::is_error_status_code((web::http::status_code)status) && is_deprecated)
+                        {
+                            return nmos::details::make_nc_method_result({ nmos::nc_method_status::method_deprecated }, nmos::fields::nc::value(result));
+                        }
+                    }
+                    return result;
                 };
             }
-            nmos::experimental::control_protocol_method_handler make_nc_validate_set_properties_by_path_handler(validate_set_properties_by_path_handler validate_set_properties_by_path_handler)
+            nmos::experimental::control_protocol_method_handler make_nc_validate_set_properties_by_path_handler(validate_set_properties_by_path_handler validate_set_properties_by_path)
             {
-                return [validate_set_properties_by_path_handler](nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, slog::base_gate& gate)
+                return [validate_set_properties_by_path](nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, slog::base_gate& gate)
                 {
                     bool recurse = nmos::fields::nc::recurse(arguments);
                     const auto& data_set = nmos::fields::nc::data_set(arguments);
@@ -202,12 +212,23 @@ namespace nmos
                         return nmos::details::make_nc_method_result_error({ nc_method_status::parameter_error }, U("Null dataSet parameter"));
                     }
 
-                    return validate_set_properties_by_path_handler ? validate_set_properties_by_path_handler(resource, data_set, recurse, is_deprecated, gate) : nmos::details::make_nc_method_result_error({ nmos::nc_method_status::method_not_implemented }, U("not implemented"));
+                    auto result = nmos::details::make_nc_method_result_error({ nmos::nc_method_status::method_not_implemented }, U("not implemented"));
+                    if (validate_set_properties_by_path)
+                    {
+                        result = validate_set_properties_by_path(resource, data_set, recurse);
+
+                        const auto& status = nmos::fields::nc::status(result);
+                        if (!web::http::is_error_status_code((web::http::status_code)status) && is_deprecated)
+                        {
+                            return nmos::details::make_nc_method_result({ nmos::nc_method_status::method_deprecated }, nmos::fields::nc::value(result));
+                        }
+                    }
+                    return result;
                 };
             }
-            nmos::experimental::control_protocol_method_handler make_nc_set_properties_by_path_handler(set_properties_by_path_handler set_properties_by_path_handler)
+            nmos::experimental::control_protocol_method_handler make_nc_set_properties_by_path_handler(set_properties_by_path_handler set_properties_by_path)
             {
-                return [set_properties_by_path_handler](nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, slog::base_gate& gate)
+                return [set_properties_by_path](nmos::resources& resources, const nmos::resource& resource, const web::json::value& arguments, bool is_deprecated, slog::base_gate& gate)
                 {
                     bool recurse = nmos::fields::nc::recurse(arguments);
                     bool allow_incomplete = nmos::fields::nc::allow_incomplete(arguments);
@@ -218,7 +239,18 @@ namespace nmos
                         return nmos::details::make_nc_method_result_error({ nc_method_status::parameter_error }, U("Null dataSet parameter"));
                     }
 
-                    return set_properties_by_path_handler ? set_properties_by_path_handler(resource, data_set, recurse, allow_incomplete, is_deprecated, gate) : nmos::details::make_nc_method_result_error({ nmos::nc_method_status::method_not_implemented }, U("not implemented"));
+                    auto result = nmos::details::make_nc_method_result_error({ nmos::nc_method_status::method_not_implemented }, U("not implemented"));
+                    if (set_properties_by_path)
+                    {
+                        result = set_properties_by_path(resource, data_set, recurse, allow_incomplete);
+
+                        const auto& status = nmos::fields::nc::status(result);
+                        if (!web::http::is_error_status_code((web::http::status_code)status) && is_deprecated)
+                        {
+                            return nmos::details::make_nc_method_result({ nmos::nc_method_status::method_deprecated }, nmos::fields::nc::value(result));
+                        }
+                    }
+                    return result;
                 };
             }
         }
