@@ -1,5 +1,6 @@
 #include "nmos/control_protocol_state.h"
 
+#include "cpprest/http_utils.h"
 #include "nmos/control_protocol_methods.h"
 #include "nmos/control_protocol_resource.h"
 
