@@ -391,6 +391,9 @@ namespace nmos
     // See https://specs.amwa.tv/ms-05-02/branches/v1.0.x/docs/Blocks.html
     const nc_oid root_block_oid{ 1 };
     const utility::string_t root_block_role{ U("root") };
+
+    // Device Configuration
+    const utility::string_t bulk_properties_manager_role{ root_block_role + U(".BulkPropertiesManager") };
 }
 
 #endif
