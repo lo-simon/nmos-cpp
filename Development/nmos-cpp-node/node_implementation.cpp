@@ -1287,6 +1287,8 @@ void node_implementation_init(nmos::node_model& model, nmos::experimental::contr
         nmos::push_back(root_block, class_manager);
         // add device-manager to root-block
         nmos::push_back(root_block, device_manager);
+        // add bulk-properties-manager to root-block
+        nmos::push_back(root_block, bulk_properties_manager);
 
         // insert control protocol resources to model
         insert_root_after(delay_millis, root_block, gate);
