@@ -723,7 +723,6 @@ namespace nmos
             auto& resources = model.control_protocol_resources;
             const auto& resource = details::find_resource(resources, role_path);
             const auto& bulk_properties_manager = details::find_resource(resources, nmos::bulk_properties_manager_role);
-            
             if (resources.end() != resource && resources.end() != bulk_properties_manager)
             {
                 return details::extract_json(req, gate_).then([res, resources, resource, get_control_protocol_method_descriptor, version, &gate_](value body) mutable
@@ -797,7 +796,6 @@ namespace nmos
             auto& resources = model.control_protocol_resources;
             const auto& resource = details::find_resource(resources, role_path);
             const auto& bulk_properties_manager = details::find_resource(resources, nmos::bulk_properties_manager_role);
-            
             if (resources.end() != resource && resources.end() != bulk_properties_manager)
             {
                 return details::extract_json(req, gate_).then([res, resources, resource, get_control_protocol_method_descriptor, version, &gate_](value body) mutable
@@ -816,7 +814,6 @@ namespace nmos
                         try
                         {
                             method_result = control_method_handler(resources, *resource, nmos::fields::nc::arguments(body), nmos::fields::nc::is_deprecated(nc_method_descriptor), gate_);
-                            
                             auto status = nmos::fields::nc::status(method_result);
                             if (nc_method_status::ok == status || nc_method_status::method_deprecated == status) { code = status_codes::OK; }
                             else if (nc_method_status::parameter_error == status) { code = status_codes::BadRequest; }
