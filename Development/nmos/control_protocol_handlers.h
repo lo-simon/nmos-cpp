@@ -38,9 +38,9 @@ namespace nmos
 
     // Device Configuration handlers
     // these callbacks should not throw exceptions
-    typedef std::function<web::json::value(const nmos::resource& resource, bool recurse)> get_properties_by_path_handler;
-    typedef std::function<web::json::value(const nmos::resource& resource, const web::json::value& backup_data_set, bool recurse, const web::json::array& included_property_traits)> validate_set_properties_by_path_handler;
-    typedef std::function<web::json::value(const nmos::resource& resource, const web::json::value& backup_data_set, bool recurse, const web::json::array& included_property_traits)> set_properties_by_path_handler;
+    typedef std::function<web::json::value(nmos::experimental::control_protocol_state& control_protocol_state, const nmos::resource& resource, bool recurse)> get_properties_by_path_handler;
+    typedef std::function<web::json::value(nmos::experimental::control_protocol_state& control_protocol_state, const nmos::resource& resource, const web::json::value& backup_data_set, bool recurse, const web::json::array& included_property_traits)> validate_set_properties_by_path_handler;
+    typedef std::function<web::json::value(nmos::experimental::control_protocol_state& control_protocol_state, const nmos::resource& resource, const web::json::value& backup_data_set, bool recurse, const web::json::array& included_property_traits)> set_properties_by_path_handler;
 
     namespace experimental
     {
