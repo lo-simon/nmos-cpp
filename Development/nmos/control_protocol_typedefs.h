@@ -125,7 +125,7 @@ namespace nmos
     }
 
     // Device Configuration
-    // NcPropertyTrait 
+    // NcPropertyTrait
     namespace nc_property_trait
     {
         enum trait
