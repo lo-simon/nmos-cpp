@@ -113,7 +113,7 @@ namespace nmos
         // See https://specs.amwa.tv/ms-05-02/branches/v1.0.x/docs/Framework.html#ncpropertydescriptor
         // constraints can be null
         web::json::value make_nc_property_descriptor(const utility::string_t& description, const nc_property_id& id, const nc_name& name, const utility::string_t& type_name,
-            bool is_read_only, bool is_nullable, bool is_sequence, bool is_deprecated, const web::json::value& constraints);
+            bool is_read_only, bool is_nullable, bool is_sequence, bool is_deprecated, const web::json::value& constraints, const web::json::value& property_traits = web::json::value_of({ nc_property_trait::general }));
 
         // See https://specs.amwa.tv/ms-05-02/branches/v1.0.x/docs/Framework.html#ncdatatypedescriptorenum
         // constraints can be null
@@ -194,6 +194,21 @@ namespace nmos
 
         // TODO: add link
         web::json::value make_nc_bulk_properties_manager(nc_oid oid, nc_oid owner, const web::json::value& user_label, const utility::string_t& description, const web::json::value& touchpoints, const web::json::value& runtime_property_constraints);
+
+        // TODO: add link
+        web::json::value make_nc_bulk_values_holder(const utility::string_t& validation_fingerprint, const web::json::value& object_properties_holders);
+
+        // TODO: add link
+        web::json::value make_nc_property_value_holder(const nc_property_id& property_id, const nc_name& name, const utility::string_t& type_name, bool is_read_only, const web::json::value& property_traits, const web::json::value& property_value);
+
+        // TODO: add link
+        web::json::value make_nc_object_properties_holder(const web::json::value& role_path, const web::json::value& property_value_holders);
+
+        // TODO: add link
+        web::json::value make_nc_property_restore_notice(const nc_property_id& property_id, const nc_name& name, nc_property_restore_notice_type::type notice_type, const utility::string_t& notice_message);
+
+        // TODO: add link
+        web::json::value make_nc_object_properties_set_validation(const web::json::value& role_path, nc_restore_validation_status::status status, const web::json::value& notices, const utility::string_t& status_message);
     }
 
     // command message response
@@ -450,6 +465,10 @@ namespace nmos
     web::json::value make_nc_bulk_values_holder_datatype();
     //
     web::json::value make_nc_restore_validation_status_datatype();
+    //
+    web::json::value make_nc_property_restore_notice_type_datatype();
+    //
+    web::json::value make_nc_property_restore_notice_datatype();
     //
     web::json::value make_nc_object_properties_set_validation_datatype();
     //

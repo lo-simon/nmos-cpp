@@ -312,7 +312,7 @@ namespace nmos
             const web::json::field_as_array fields{ U("fields") }; // sequence<NcFieldDescriptor>
             const web::json::field_as_integer generic_state{ U("generic") }; // NcDeviceGenericState
             const web::json::field_as_string device_specific_details{ U("deviceSpecificDetails") };
-            const web::json::field_as_array path{ U("path") }; // NcRolePath
+            const web::json::field_as_value path{ U("path") }; // NcRolePath
             const web::json::field_as_bool case_sensitive{ U("caseSensitive") };
             const web::json::field_as_bool match_whole_string{ U("matchWholeString") };
             const web::json::field_as_bool include_derived{ U("includeDerived") };
@@ -341,7 +341,10 @@ namespace nmos
             const web::json::field_as_string status_message{ U("statusMessage") };
             const web::json::field_as_value data_set{ U("dataSet") }; // NcBulkValuesHolder
             const web::json::field_as_value traits{ U("traits") };
-            const web::json::field_as_array included_property_traits{ U("includedPropertyTraits") };
+            const web::json::field_as_value property_traits{ U("propertyTraits") }; // sequence<NcPropertyTrait>
+            const web::json::field_as_value notice_type{ U("noticeType") }; // NcPropertyRestoreNotice
+            const web::json::field_as_value notice_message{ U("noticeMessage") }; // NcPropertyRestoreNotice
+            const web::json::field_as_value notices{ U("notices") }; // NcObjectPropertiesSetValidation
         }
 
         // NMOS Parameter Registers
