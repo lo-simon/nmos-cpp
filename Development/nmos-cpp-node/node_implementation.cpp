@@ -1,5 +1,6 @@
 #include "node_implementation.h"
 
+#include <algorithm>
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/find.hpp>
@@ -19,6 +20,8 @@
 #include "nmos/channelmapping_resources.h"
 #include "nmos/clock_name.h"
 #include "nmos/colorspace.h"
+#include "nmos/configuration_handlers.h"
+#include "nmos/configuration_methods.h"
 #include "nmos/connection_resources.h"
 #include "nmos/connection_events_activation.h"
 #include "nmos/control_protocol_resources.h"
@@ -1722,36 +1725,33 @@ nmos::control_protocol_property_changed_handler make_node_implementation_control
 // Example Device Configuration callback for creating a back-up dataset
 nmos::get_properties_by_path_handler make_node_implementation_get_properties_by_path_handler(const nmos::resources& resources, slog::base_gate& gate)
 {
-    return [&resources, &gate](nmos::get_control_protocol_class_descriptor_handler get_control_protocol_class_descriptor, nmos::get_control_protocol_datatype_descriptor_handler get_control_protocol_datatype_descriptor, const nmos::resource& resource, bool recurse)
+    return [&resources, &gate](nmos::experimental::control_protocol_state& control_protocol_state, nmos::get_control_protocol_class_descriptor_handler get_control_protocol_class_descriptor, nmos::get_control_protocol_datatype_descriptor_handler get_control_protocol_datatype_descriptor, const nmos::resource& resource, bool recurse)
     {
         slog::log<slog::severities::info>(gate, SLOG_FLF) << nmos::stash_category(impl::categories::node_implementation) << "Do get_properties_by_path";
 
-        // Implement backup of device model here
-        return nmos::details::make_nc_method_result({ nmos::nc_method_status::ok });
+        return nmos::get_properties_by_path(resources, control_protocol_state, get_control_protocol_class_descriptor, get_control_protocol_datatype_descriptor, resource, recurse);
     };
 }
 
 // Example Device Configuration callback for validating a back-up dataset
-nmos::validate_set_properties_by_path_handler make_node_implementation_validate_set_properties_by_path_handler(const nmos::resources& resources, slog::base_gate& gate)
+nmos::modify_read_only_config_properties_handler make_modify_read_only_config_properties_handler(nmos::resources& resources, slog::base_gate& gate)
 {
-    return [&resources, &gate](nmos::get_control_protocol_class_descriptor_handler get_control_protocol_class_descriptor, nmos::get_control_protocol_datatype_descriptor_handler get_control_protocol_datatype_descriptor, const nmos::resource& resource, const web::json::value& backup_data_set, bool recurse, const web::json::value& restore_mode)
+    return [&resources, &gate](nmos::experimental::control_protocol_state& control_protocol_state, nmos::get_control_protocol_class_descriptor_handler get_control_protocol_class_descriptor, const web::json::value& target_role_path, const web::json::value& object_properties_holders, bool recurse, const web::json::value& restore_mode, bool validate)
     {
-        slog::log<slog::severities::info>(gate, SLOG_FLF) << nmos::stash_category(impl::categories::node_implementation) << "Do validate_set_properties_by_path";
+        slog::log<slog::severities::info>(gate, SLOG_FLF) << nmos::stash_category(impl::categories::node_implementation) << "Do modify_read_only_config_properties";
 
-        // Can this backup be restored?
-        return nmos::details::make_nc_method_result({ nmos::nc_method_status::ok });
+        return web::json::value();
     };
 }
 
 // Example Device Configuration callback for restoring a back-up dataset
-nmos::set_properties_by_path_handler make_node_implementation_set_properties_by_path_handler(nmos::resources& resources, slog::base_gate& gate)
+nmos::modify_rebuildable_block_handler make_modify_rebuildable_block_handler(nmos::resources& resources, slog::base_gate& gate)
 {
-    return [&resources, &gate](nmos::get_control_protocol_class_descriptor_handler get_control_protocol_class_descriptor, nmos::get_control_protocol_datatype_descriptor_handler get_control_protocol_datatype_descriptor, const nmos::resource& resource, const web::json::value& data_set, bool recurse, const web::json::value& restore_mode)
+    return [&resources, &gate](nmos::experimental::control_protocol_state& control_protocol_state, nmos::get_control_protocol_class_descriptor_handler get_control_protocol_class_descriptor, const web::json::value& target_role_path, const web::json::value& property_values, bool recurse, const web::json::value& restore_mode, bool validate)
     {
-        slog::log<slog::severities::info>(gate, SLOG_FLF) << nmos::stash_category(impl::categories::node_implementation) << "Do set_properties_by_path";
+        slog::log<slog::severities::info>(gate, SLOG_FLF) << nmos::stash_category(impl::categories::node_implementation) << "Do modify_rebuildable_block";
 
-        // Implement restore of device model here
-        return nmos::details::make_nc_method_result({ nmos::nc_method_status::ok });
+        return web::json::value();
     };
 }
 
@@ -1911,6 +1911,6 @@ nmos::experimental::node_implementation make_node_implementation(nmos::node_mode
         .on_channelmapping_activated(make_node_implementation_channelmapping_activation_handler(gate))
         .on_control_protocol_property_changed(make_node_implementation_control_protocol_property_changed_handler(gate)) // may be omitted if IS-12 not required
         .on_get_properties_by_path(make_node_implementation_get_properties_by_path_handler(model.control_protocol_resources, gate)) // may be omitted if IS-14 not required
-        .on_validate_set_properties_by_path(make_node_implementation_validate_set_properties_by_path_handler(model.control_protocol_resources, gate)) // may be omitted if IS-14 not required
-        .on_set_properties_by_path(make_node_implementation_set_properties_by_path_handler(model.control_protocol_resources, gate)); // may be omitted if IS-14 not required
+        .on_modify_read_only_config_properties(make_modify_read_only_config_properties_handler(model.control_protocol_resources, gate)) // may be omitted if IS-14 not required
+        .on_modify_rebuildable_block(make_modify_rebuildable_block_handler(model.control_protocol_resources, gate)); // may be omitted if IS-14 not required
 }
