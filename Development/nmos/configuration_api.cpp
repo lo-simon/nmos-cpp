@@ -1,10 +1,10 @@
 #include "nmos/configuration_api.h"
 
-#include <boost/algorithm/string/split.hpp>
 #include <boost/iterator/filter_iterator.hpp>
 #include <boost/range/join.hpp>
 #include "cpprest/json_validator.h"
 #include "nmos/api_utils.h"
+#include "nmos/configuration_methods.h"
 #include "nmos/control_protocol_handlers.h"
 #include "nmos/control_protocol_methods.h"
 #include "nmos/control_protocol_resource.h"
@@ -82,85 +82,6 @@ namespace nmos
                     }
                 }
             }
-        }
-
-        web::json::value get_nc_block_member_descriptor(const resources& resources, const nmos::resource& parent_nc_block_resource, std::list<utility::string_t>& role_path_segments)
-        {
-            if (parent_nc_block_resource.data.has_field(nmos::fields::nc::members))
-            {
-                const auto& members = nmos::fields::nc::members(parent_nc_block_resource.data);
-
-                const auto role_path_segement = role_path_segments.front();
-                role_path_segments.pop_front();
-                // find the role_path_segment member
-                auto member_found = std::find_if(members.begin(), members.end(), [&](const web::json::value& member)
-                {
-                    return role_path_segement == nmos::fields::nc::role(member);
-                });
-
-                if (members.end() != member_found)
-                {
-                    if (role_path_segments.empty())
-                    {
-                        // NcBlockMemberDescriptor
-                        return *member_found;
-                    }
-
-                    // get the role_path_segement member resource
-                    if (is_nc_block(nmos::details::parse_nc_class_id(nmos::fields::nc::class_id(*member_found))))
-                    {
-                        // get resource based on the oid
-                        const auto& oid = nmos::fields::nc::oid(*member_found);
-                        const auto& found = nmos::find_resource(resources, utility::s2us(std::to_string(oid)));
-                        if (resources.end() != found)
-                        {
-                            return get_nc_block_member_descriptor(resources, *found, role_path_segments);
-                        }
-                    }
-                }
-            }
-            return web::json::value{};
-        }
-
-        resources::const_iterator find_resource(const resources& resources, std::list<utility::string_t>& role_path_segments)
-        {
-            auto resource = nmos::find_resource(resources, utility::s2us(std::to_string(nmos::root_block_oid)));
-            if (resources.end() != resource)
-            {
-                const auto role = nmos::fields::nc::role(resource->data);
-                if (role_path_segments.size() && role == role_path_segments.front())
-                {
-                    role_path_segments.pop_front();
-
-                    if (role_path_segments.size())
-                    {
-                        const auto& block_member_descriptor = details::get_nc_block_member_descriptor(resources, *resource, role_path_segments);
-                        if (!block_member_descriptor.is_null())
-                        {
-                            const auto& oid = nmos::fields::nc::oid(block_member_descriptor);
-                            const auto& found = nmos::find_resource(resources, utility::s2us(std::to_string(oid)));
-                            if (resources.end() != found)
-                            {
-                                return found;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        return resource;
-                    }
-                }
-            }
-            return resources.end();
-        }
-
-        resources::const_iterator find_resource(const resources& resources, const utility::string_t& role_path)
-        {
-            // tokenize the role_path with the '.' delimiter
-            std::list<utility::string_t> role_path_segments;
-            boost::algorithm::split(role_path_segments, role_path, [](utility::char_t c) { return '.' == c; });
-
-            return find_resource(resources, role_path_segments);
         }
 
         nc_property_id parse_formatted_property_id(const utility::string_t& property_id)
@@ -272,7 +193,7 @@ namespace nmos
 
             auto lock = model.read_lock();
             auto& resources = model.control_protocol_resources;
-            const auto& resource = details::find_resource(resources, role_path);
+            const auto& resource = find_control_protocol_resource_by_role_path(resources, role_path);
 
             if (resources.end() != resource)
             {
@@ -294,7 +215,7 @@ namespace nmos
             auto lock = model.read_lock();
             auto& resources = model.control_protocol_resources;
 
-            const auto& resource = details::find_resource(resources, role_path);
+            const auto& resource = find_control_protocol_resource_by_role_path(resources, role_path);
             if (resources.end() != resource)
             {
                 std::set<utility::string_t> properties_routes;
@@ -333,7 +254,7 @@ namespace nmos
             auto lock = model.read_lock();
             auto& resources = model.control_protocol_resources;
 
-            const auto& resource = details::find_resource(resources, role_path);
+            const auto& resource = find_control_protocol_resource_by_role_path(resources, role_path);
             if (resources.end() != resource)
             {
                 std::set<utility::string_t> methods_routes;
@@ -379,7 +300,7 @@ namespace nmos
             auto lock = model.read_lock();
             auto& resources = model.control_protocol_resources;
 
-            const auto& resource = details::find_resource(resources, role_path);
+            const auto& resource = find_control_protocol_resource_by_role_path(resources, role_path);
             if (resources.end() != resource)
             {
                 nc_class_id class_id = nmos::details::parse_nc_class_id(nmos::fields::nc::class_id(resource->data));
@@ -435,7 +356,7 @@ namespace nmos
             auto lock = model.read_lock();
             auto& resources = model.control_protocol_resources;
 
-            const auto& resource = details::find_resource(resources, role_path);
+            const auto& resource = find_control_protocol_resource_by_role_path(resources, role_path);
             if (resources.end() != resource)
             {
                 // find the relevant nc_property_descriptor
@@ -466,7 +387,7 @@ namespace nmos
             auto lock = model.read_lock();
             auto& resources = model.control_protocol_resources;
 
-            const auto& resource = details::find_resource(resources, role_path);
+            const auto& resource = find_control_protocol_resource_by_role_path(resources, role_path);
             if (resources.end() != resource)
             {
                 // find the relevant nc_property_descriptor
@@ -498,7 +419,7 @@ namespace nmos
             auto lock = model.read_lock();
             auto& resources = model.control_protocol_resources;
 
-            const auto& resource = details::find_resource(resources, role_path);
+            const auto& resource = find_control_protocol_resource_by_role_path(resources, role_path);
             if (resources.end() != resource)
             {
                 // find the relevant nc_property_descriptor
@@ -540,7 +461,7 @@ namespace nmos
                 auto& resources = model.control_protocol_resources;
                 auto& arguments = nmos::fields::nc::arguments(body);
 
-                const auto& resource = details::find_resource(resources, role_path);
+                const auto& resource = find_control_protocol_resource_by_role_path(resources, role_path);
                 if (resources.end() != resource)
                 {
                     auto method = get_control_protocol_method_descriptor(details::parse_nc_class_id(nmos::fields::nc::class_id(resource->data)), details::parse_formatted_method_id(method_id));
@@ -614,7 +535,7 @@ namespace nmos
 
                 auto& resources = model.control_protocol_resources;
 
-                const auto& resource = details::find_resource(resources, role_path);
+                const auto& resource = find_control_protocol_resource_by_role_path(resources, role_path);
                 if (resources.end() != resource)
                 {
                     // find the relevant nc_property_descriptor
@@ -635,6 +556,7 @@ namespace nmos
                         auto status = nmos::fields::nc::status(result);
                         auto code = (nc_method_status::ok == status || nc_method_status::property_deprecated == status) ? status_codes::OK : status_codes::InternalError;
                         set_reply(res, code, result);
+                        model.notify();
                     }
                 }
                 else
@@ -647,68 +569,46 @@ namespace nmos
             });
         });
 
-        configuration_api.support(U("/rolePaths/") + nmos::patterns::rolePath.pattern + U("/bulkProperties/?"), methods::GET, [&model, get_control_protocol_method_descriptor, &gate_](http_request req, http_response res, const string_t&, const route_parameters& parameters)
+        configuration_api.support(U("/rolePaths/") + nmos::patterns::rolePath.pattern + U("/bulkProperties/?"), methods::GET, [&model, get_control_protocol_class_descriptor, get_control_protocol_datatype_descriptor, &gate_](http_request req, http_response res, const string_t&, const route_parameters& parameters)
         {
             const auto role_path = parameters.at(nmos::patterns::rolePath.name);
 
             auto lock = model.read_lock();
             auto& resources = model.control_protocol_resources;
-            const auto& resource = details::find_resource(resources, role_path);
-            const auto& bulk_properties_manager = details::find_resource(resources, nmos::bulk_properties_manager_role);
+            const auto& resource = find_control_protocol_resource_by_role_path(resources, role_path);
 
-            if (resources.end() != resource && resources.end() != bulk_properties_manager)
+            if (resources.end() != resource)
             {
-                auto method = get_control_protocol_method_descriptor(nc_bulk_properties_manager_class_id, nc_bulk_properties_manager_get_properties_by_path_method_id);
-                auto& nc_method_descriptor = method.first;
-                auto& control_method_handler = method.second;
                 web::http::status_code code{ status_codes::BadRequest };
                 value method_result;
 
-                if (control_method_handler)
+                try
                 {
-                    try
-                    {
-                        bool recurse = details::parse_recurse_query_parameter(req.request_uri().query());
+                    bool recurse = details::parse_recurse_query_parameter(req.request_uri().query());
 
-                        method_result = control_method_handler(resources, *resource, value_of({ { nmos::fields::nc::recurse, recurse } }), nmos::fields::nc::is_deprecated(nc_method_descriptor), gate_);
+                    method_result = get_properties_by_path(resources, *resource, recurse, get_control_protocol_class_descriptor, get_control_protocol_datatype_descriptor);
 
-                        auto status = nmos::fields::nc::status(method_result);
-                        if (nc_method_status::ok == status || nc_method_status::method_deprecated == status) { code = status_codes::OK; }
-                        else if (nc_method_status::parameter_error == status) { code = status_codes::BadRequest; }
-                        else if (nc_method_status::device_error == status) { code = status_codes::InternalError; }
-                        else { code = status_codes::InternalError; }
-                    }
-                    catch (const nmos::control_protocol_exception& e)
-                    {
-                        // invalid arguments
-                        utility::stringstream_t ss;
-                        ss << U("parameter error: ") << e.what();
-                        method_result = details::make_nc_method_result_error({ nmos::nc_method_status::parameter_error }, ss.str());
-
-                        code = status_codes::BadRequest;
-                    }
+                    auto status = nmos::fields::nc::status(method_result);
+                    if (nc_method_status::ok == status || nc_method_status::method_deprecated == status) { code = status_codes::OK; }
+                    else if (nc_method_status::parameter_error == status) { code = status_codes::BadRequest; }
+                    else if (nc_method_status::device_error == status) { code = status_codes::InternalError; }
+                    else { code = status_codes::InternalError; }
                 }
-                else
+                catch (const nmos::control_protocol_exception& e)
                 {
-                    // unknown methodId
-                    method_result = details::make_nc_method_result_error({ nmos::nc_method_status::method_not_implemented }, U("get_properties_by_path unsupported by bulk properties manager."));
+                    // invalid arguments
+                    utility::stringstream_t ss;
+                    ss << U("parameter error: ") << e.what();
+                    method_result = details::make_nc_method_result_error({ nmos::nc_method_status::parameter_error }, ss.str());
 
-                    code = status_codes::NotFound;
+                    code = status_codes::BadRequest;
                 }
                 set_reply(res, code, method_result);
             }
             else
             {
-                if (resources.end() == bulk_properties_manager)
-                {
-                    // no bulk properties manager
-                    set_error_reply(res, status_codes::NotFound, U("Bulk Properties Manager not found at ") + nmos::bulk_properties_manager_role);
-                }
-                else
-                {
-                    // resource not found for the role path
-                    set_error_reply(res, status_codes::NotFound, U("Not Found; ") + role_path);
-                }
+                // resource not found for the role path
+                set_error_reply(res, status_codes::NotFound, U("Not Found; ") + role_path);
             }
 
             return pplx::task_from_result(true);
@@ -721,8 +621,8 @@ namespace nmos
 
             auto lock = model.read_lock();
             auto& resources = model.control_protocol_resources;
-            const auto& resource = details::find_resource(resources, role_path);
-            const auto& bulk_properties_manager = details::find_resource(resources, nmos::bulk_properties_manager_role);
+            const auto& resource = find_control_protocol_resource_by_role_path(resources, role_path);
+            const auto& bulk_properties_manager = find_control_protocol_resource_by_role_path(resources, nmos::bulk_properties_manager_role);
             if (resources.end() != resource && resources.end() != bulk_properties_manager)
             {
                 return details::extract_json(req, gate_).then([res, resources, resource, get_control_protocol_method_descriptor, version, &gate_](value body) mutable
@@ -794,11 +694,11 @@ namespace nmos
 
             auto lock = model.read_lock();
             auto& resources = model.control_protocol_resources;
-            const auto& resource = details::find_resource(resources, role_path);
-            const auto& bulk_properties_manager = details::find_resource(resources, nmos::bulk_properties_manager_role);
+            const auto& resource = find_control_protocol_resource_by_role_path(resources, role_path);
+            const auto& bulk_properties_manager = find_control_protocol_resource_by_role_path(resources, nmos::bulk_properties_manager_role);
             if (resources.end() != resource && resources.end() != bulk_properties_manager)
             {
-                return details::extract_json(req, gate_).then([res, resources, resource, get_control_protocol_method_descriptor, version, &gate_](value body) mutable
+                return details::extract_json(req, gate_).then([res, &resources, resource, get_control_protocol_method_descriptor, version, &model, &gate_](value body) mutable
                 {
                     // Validate JSON syntax according to the schema
                     details::configurationapi_validator().validate(body, experimental::make_configurationapi_bulkProperties_set_request_schema_uri(version));
@@ -819,6 +719,7 @@ namespace nmos
                             else if (nc_method_status::parameter_error == status) { code = status_codes::BadRequest; }
                             else if (nc_method_status::device_error == status) { code = status_codes::InternalError; }
                             else { code = status_codes::InternalError; }
+                            model.notify();
                         }
                         catch (const nmos::control_protocol_exception& e)
                         {
