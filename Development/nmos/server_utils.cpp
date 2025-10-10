@@ -3,6 +3,11 @@
 #include <algorithm>
 // cf. preprocessor conditions in nmos::details::make_listener_ssl_context_callback
 #if !defined(_WIN32) || !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
+#ifdef _WIN32
+#include <winsock2.h>
+#include <mstcpip.h>
+#endif
+#include <boost/asio.hpp>
 #include "boost/asio/ssl/set_cipher_list.hpp"
 #include "boost/asio/ssl/use_tmp_ecdh.hpp"
 #endif
@@ -95,6 +100,57 @@ namespace nmos
                 }
             };
         }
+
+        inline std::function<void(boost::asio::ip::tcp::socket&)> make_listener_tcp_socket_callback(const nmos::settings& settings, slog::base_gate& gate)
+        {
+            return [&gate, &settings](boost::asio::ip::tcp::socket& sock)
+            {
+                const int keepalive = nmos::experimental::fields::tcp_keepalive(settings);
+                if (0 == setsockopt(sock.native_handle(), SOL_SOCKET, SO_KEEPALIVE, (const char*)&keepalive, sizeof(keepalive)))
+                {
+                    if (keepalive)
+                    {
+                        const auto& idle = nmos::experimental::fields::tcp_keepalive_idle(settings);
+                        const auto& intvl = nmos::experimental::fields::tcp_keepalive_intvl(settings);
+                        const auto& cnt = nmos::experimental::fields::tcp_keepalive_cnt(settings);
+
+                        slog::log<slog::severities::info>(gate, SLOG_FLF) << "Set socket keepalive idle:" << idle << "s, intvl:" << intvl << "s, cnt:" << cnt;
+
+                        // set keepalive parameters
+                        // Note: Windows does not support setsockopt(..., TCP_KEEPIDLE / TCP_KEEPINTVL / TCP_KEEPCNT) use WSAIoctl(SIO_KEEPALIVE_VALS)
+                        // to set keepalive parameters
+#ifdef _WIN32
+                        tcp_keepalive ka = { 1, idle*1000, intvl*1000 };
+                        DWORD bytes = 0;
+                        if (SOCKET_ERROR == WSAIoctl(sock.native_handle(), SIO_KEEPALIVE_VALS, &ka, sizeof(ka), NULL, 0, &bytes, NULL, NULL))
+                        {
+                            slog::log<slog::severities::warning>(gate, SLOG_FLF) << "Unable to set socket keepalive error: " << WSAGetLastError();
+                        }
+#else
+                        // The time (in seconds) the connection needs to remain idle before TCP starts sending keepalive probes
+                        if (0 > setsockopt(sock.native_handle(), IPPROTO_TCP, TCP_KEEPIDLE, (const char*)&idle, sizeof(idle)))
+                        {
+                            slog::log<slog::severities::warning>(gate, SLOG_FLF) << "Unable to set socket keepalive idle to " << idle << "sec";
+                        }
+                        // The time (in seconds) between individual keepalive probes
+                        if (0 > setsockopt(sock.native_handle(), IPPROTO_TCP, TCP_KEEPINTVL, (const char*)&intvl, sizeof(intvl)))
+                        {
+                            slog::log<slog::severities::warning>(gate, SLOG_FLF) << "Unable to set socket keepalive intvl to " << intvl << "sec";
+                        }
+                        // The maximum number of keepalive probes TCP should send before dropping the connection
+                        if (0 > setsockopt(sock.native_handle(), IPPROTO_TCP, TCP_KEEPCNT, (const char*)&cnt, sizeof(cnt)))
+                        {
+                            slog::log<slog::severities::warning>(gate, SLOG_FLF) << "Unable to set socket keepalive cnt to " << cnt;
+                        }
+#endif // _WIN32
+                    }
+                }
+                else
+                {
+                    slog::log<slog::severities::warning>(gate, SLOG_FLF) << "Unable to set socket keepalive";
+                }
+            };
+        }
 #endif
     }
 
@@ -108,6 +164,7 @@ namespace nmos
         // only expects boost::system::system_error to be thrown, so for now
         // don't use web::http::http_exception
         config.set_ssl_context_callback(details::make_listener_ssl_context_callback<boost::system::system_error>(settings, load_server_certificates, load_dh_param, get_ocsp_response, gate));
+        config.set_tcp_socket_callback(details::make_listener_tcp_socket_callback(settings, gate));
 #endif
 
         return config;

@@ -468,6 +468,19 @@ namespace nmos
             // serial_number [node]: the serial number of the NcDeviceManager used for NMOS Control Protocol
             // See https://specs.amwa.tv/ms-05-02/branches/v1.0.x/docs/Framework.html#ncdevicemanager
             const web::json::field_as_string_or serial_number{ U("serial_number"), U("") };
+
+            // tcp_keepalive/tcp_keepalive_idle/tcp_keepalive_intvl/tcp_keepalive_cnt [registry, node]: check tcp connected socket, and determine whether the connection is still up and running or if it has broken
+            // (the header is omitted if server_secure is false, or hsts_max_age is negative)
+            // See https://en.wikipedia.org/wiki/Keepalive#:~:text=Typically%2C%20TCP%20keepalives%20are%20sent,any%20of%20the%20Keepalive%20packets.
+            // See https://datatracker.ietf.org/doc/html/rfc1122
+            // tcp_keepalive [registry, node]: whether server using TCP keep alive mechanism to monitor the health of an idle TCP connection, default to off
+            const web::json::field_as_bool_or tcp_keepalive{ U("tcp_keepalive"), false };
+            // The time (in seconds) the connection needs to remain idle before TCP starts sending keepalive probes, default to 7200 seconds
+            const web::json::field_as_integer_or tcp_keepalive_idle{ U("tcp_keepalive_idle"), 7200 };
+            // The time (in seconds) between individual keepalive probes, default to 75 seconds
+            const web::json::field_as_integer_or tcp_keepalive_intvl{ U("tcp_keepalive_intvl"), 75 };
+            // The maximum number of keepalive probes TCP should send before dropping the connection, default to 9
+            const web::json::field_as_integer_or tcp_keepalive_cnt{ U("tcp_keepalive_cnt"), 9 };
         }
     }
 }
