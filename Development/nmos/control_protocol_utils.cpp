@@ -1465,7 +1465,7 @@ namespace nmos
                 nc_sender_monitor_transmission_status_property_id,
                 nc_sender_monitor_transmission_status_message_property_id,
                 nc_sender_monitor_transmission_status_transition_counter_property_id,
-                nmos::fields::nc::connection_status_pending_received_time,
+                nmos::fields::nc::transmission_status_pending_received_time,
                 get_control_protocol_class_descriptor,
                 {},
                 gate);
@@ -1527,7 +1527,7 @@ namespace nmos
                 nc_sender_monitor_essence_status_property_id,
                 nc_sender_monitor_essence_status_message_property_id,
                 nc_sender_monitor_essence_status_transition_counter_property_id,
-                nmos::fields::nc::stream_status_pending_received_time,
+                nmos::fields::nc::essence_status_pending_received_time,
                 get_control_protocol_class_descriptor,
                 {},
                 gate);
