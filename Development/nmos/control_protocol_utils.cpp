@@ -1520,7 +1520,7 @@ namespace nmos
                 gate);
         }
 
-        // Set essence status and stream status message
+        // Set essence status and status message
         bool details::set_sender_monitor_essence_status_internal(resources& resources, nc_oid oid, nmos::nc_essence_status::status essence_status, const utility::string_t& essence_status_message, get_control_protocol_class_descriptor_handler get_control_protocol_class_descriptor, slog::base_gate& gate)
         {
             return nc::details::set_monitor_status_internal(resources, oid, essence_status, essence_status_message,
